@@ -1,0 +1,18 @@
+{
+  "name": "z-tenant-consent-ops",
+  "private": true,
+  "type": "module",
+  "description": "Deploy and demo scripts for the z-tenant-consent TEE contract",
+  "scripts": {
+    "build": "cargo build --target wasm32-wasip2 --release",
+    "test": "cargo test",
+    "deploy": "tsx ops/deploy.ts",
+    "demo": "tsx ops/demo.ts"
+  },
+  "dependencies": {
+    "@terminal3/t3n-sdk": "^5.2.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}

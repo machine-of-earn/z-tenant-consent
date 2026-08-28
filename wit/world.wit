@@ -1,0 +1,77 @@
+/// z-tenant-consent — consent-gated notice dispatch, on T3N.
+///
+/// The enterprise problem: a company wants an AI agent to send transactional
+/// notices to its customers, but three things must hold at once —
+///   1. the agent must never learn the customer's contact details,
+///   2. every send must be provably gated on a recorded, unexpired consent
+///      for that exact notice category, and
+///   3. an auditor must be able to read back what was consented and what was
+///      sent, from a tamper-evident ledger.
+///
+/// Imports, and why each one is needed (imports ARE the capability set):
+///   - tenant-context:         tenant DID, cluster timestamp, seq-no, caller DID
+///   - logging:                in-enclave log lines (never carry PII)
+///   - kv-store:               consent ledger, audit ledger, config, secrets
+///   - http-with-placeholders: the send. The recipient address is a
+///                             {{profile.*}} marker the host resolves inside
+///                             the enclave, so it never enters WASM memory.
+///
+/// Deliberately NOT imported: `http`. Every outbound call this contract makes
+/// carries a recipient, so it must go through the placeholder path. Leaving
+/// `http` out means there is no code path that could send a plain-text
+/// recipient, and that is enforced by the host at load time, not by review.
+package z:tenant-consent@0.1.0;
+
+world tenant-consent {
+    import host:tenant/tenant-context@1.0.0;
+    import host:interfaces/logging@2.1.0;
+    import host:interfaces/kv-store@2.1.0;
+    import host:interfaces/http-with-placeholders@2.1.0;
+
+    export contracts;
+}
+
+interface contracts {
+    /// Standard 3-field envelope used by all node-callable contracts.
+    ///   input        — JSON arguments for this function, as bytes
+    ///   user-profile — None for tenant contracts (resolved host-side)
+    ///   context      — node-minted DynamicContext (trusted), as bytes
+    record generic-input {
+        input:        option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context:      option<list<u8>>,
+    }
+
+    /// Record a consent grant for one subject and one notice category.
+    /// Input  (JSON): { subject_ref, category, granted, expires_at?, evidence_ref? }
+    /// Output (JSON): the stored row + { seq_no, recorded_at }
+    /// `subject_ref` is an opaque tenant-side customer id, never PII.
+    record-consent: func(req: generic-input) -> result<list<u8>, string>;
+
+    /// Withdraw a previously recorded consent. History is preserved: the
+    /// current row flips to granted=false and the prior row is kept under
+    /// its own versioned key.
+    /// Input  (JSON): { subject_ref, category, evidence_ref? }
+    /// Output (JSON): { subject_ref, category, granted: false, withdrawn_at, seq_no }
+    withdraw-consent: func(req: generic-input) -> result<list<u8>, string>;
+
+    /// Read-only consent decision. Makes no outbound call and writes nothing.
+    /// Input  (JSON): { subject_ref, category }
+    /// Output (JSON): { allowed, reason, checked_at, row? }
+    check-consent: func(req: generic-input) -> result<list<u8>, string>;
+
+    /// Send one notice, gated on consent. Fails CLOSED: when consent is
+    /// absent, withdrawn or expired the function returns a refusal and no
+    /// outbound request is made at all.
+    /// Input  (JSON): { subject_ref, category, template_id, params? }
+    /// `params` is rejected if any key looks like contact data — the
+    /// recipient is supplied by the host from the calling user's profile as
+    /// {{profile.verified_contacts.email.value}}, never by the caller.
+    /// Output (JSON): { dispatched, reason, provider_status?, audit_key, sent_at }
+    send-notice: func(req: generic-input) -> result<list<u8>, string>;
+
+    /// Read the append-only audit ledger for one subject (or all subjects).
+    /// Input  (JSON): { subject_ref?, limit? }
+    /// Output (JSON): { rows: [...], count }
+    audit-log: func(req: generic-input) -> result<list<u8>, string>;
+}

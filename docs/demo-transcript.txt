@@ -1,0 +1,147 @@
+contract z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent @ 0.1.0
+
+
+--- 0. the data owner authorises this caller for these functions and this host ---
+granted: z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent may reach httpbin.org
+
+--- 1. record consent ---
+{
+ "row": {
+  "category": "billing",
+  "evidence_ref": "signup-form-v3",
+  "granted": true,
+  "recorded_at": 1787890642,
+  "seq_no": 156706,
+  "subject_ref": "cust-1042"
+ },
+ "superseded_prior": true
+}
+
+--- 2. check consent (read-only, no send) ---
+{
+ "allowed": true,
+ "checked_at": 1787890644,
+ "reason": "consent_valid",
+ "row": {
+  "category": "billing",
+  "evidence_ref": "signup-form-v3",
+  "granted": true,
+  "recorded_at": 1787890642,
+  "seq_no": 156706,
+  "subject_ref": "cust-1042"
+ }
+}
+
+--- 3. send a notice — allowed. The recipient is a {{profile.*}} marker. ---
+{
+ "at": 1787890644,
+ "audit_key": "a/cust-1042/00000000000000156715",
+ "dispatched": true,
+ "idempotency_key": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:cust-1042:billing:156715",
+ "provider_body": "{\n  \"args\": {}, \n  \"data\": \"{\\\"consent\\\":{\\\"category\\\":\\\"billing\\\",\\\"evidence_ref\\\":\\\"signup-form-v3\\\",\\\"expires_at\\\":null,\\\"recorded_at\\\":1787890642,\\\"subject_ref\\\":\\\"cust-1042\\\"},\\\"idempotency_key\\\":\\\"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:cust-1042:billing:156715\\\",\\\"params\\\":{\\\"amount_due\\\":\\\"129.00\\\",\\\"currency\\\":\\\"GBP\\\",\\\"invoice_no\\\":\\\"INV-2026-0042\\\"},\\\"template_id\\\":\\\"invoice_due\\\",\\\"to\\\":\\\"machinamachinery@gmail.com\\\"}\", \n  \"files\": {}, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Content-Length\": \"362\", \n    \"Content-Type\": \"application/json\", \n    \"Host\": \"httpbin.org\", \n    \"X-Amzn-Trace-Id\": \"Root=1-6a910bd5-623571c855eeac38223e12cc\"\n  }, \n  \"json\": {\n    \"consent\": {\n      \"category\": \"billing\", \n      \"evidence_ref\": \"signup-form-v3\", \n      \"expires_at\": null, \n      \"recorded_at\": 1787890642, \n      \"subject_ref\": \"cust-1042\"\n    }, \n    \"idempotency_key\": \"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:cust-1042:billing:156715\", \n    \"params\": {\n      \"amount_due\": \"129.00\", \n      \"currency\": \"GBP\", \n      \"invoice_no\": \"INV-2026-0042\"\n    }, \n    \"template_id\": \"invoice_due\", \n    \"to\": \"machinamachinery@gmail.com\"\n  }, \n  \"origin\": \"35.240.193.83\", \n  \"url\": \"https://httpbin.org/post\"\n}\n",
+ "provider_status": 200,
+ "reason": "consent_valid"
+}
+
+--- 4. a caller tries to smuggle the recipient in — refused before any host call ---
+refused: RPC Error: contract error: bad input: params value under 'note' looks like an email address; the recipient is resolved host-side from the user profile [34bc7f63-c803-4991-a3c7-e0b84d399e48]
+
+--- 5. the customer withdraws consent ---
+{
+ "had_prior_consent": true,
+ "row": {
+  "category": "billing",
+  "evidence_ref": "unsubscribe-link",
+  "granted": false,
+  "recorded_at": 1787890646,
+  "seq_no": 156722,
+  "subject_ref": "cust-1042"
+ }
+}
+
+--- 6. the same send is now refused — the gate fails closed, nothing leaves ---
+{
+ "at": 1787890647,
+ "audit_key": "a/cust-1042/00000000000000156726",
+ "dispatched": false,
+ "reason": "consent_withdrawn"
+}
+
+--- 7. the audit ledger an auditor reads back ---
+{
+ "count": 6,
+ "limit": 20,
+ "rows": [
+  {
+   "at": 1787890455,
+   "caller_did": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+   "category": "billing",
+   "contract_id": 778,
+   "outcome": "dispatched",
+   "provider_status": 200,
+   "reason": "consent_valid",
+   "seq_no": 156624,
+   "subject_ref": "cust-1042",
+   "template_id": "invoice_due"
+  },
+  {
+   "at": 1787890457,
+   "caller_did": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+   "category": "billing",
+   "contract_id": 778,
+   "outcome": "refused",
+   "reason": "consent_withdrawn",
+   "seq_no": 156636,
+   "subject_ref": "cust-1042",
+   "template_id": "invoice_due"
+  },
+  {
+   "at": 1787890503,
+   "caller_did": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+   "category": "billing",
+   "contract_id": 778,
+   "outcome": "dispatched",
+   "provider_status": 200,
+   "reason": "consent_valid",
+   "seq_no": 156661,
+   "subject_ref": "cust-1042",
+   "template_id": "invoice_due"
+  },
+  {
+   "at": 1787890515,
+   "caller_did": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+   "category": "marketing",
+   "contract_id": 778,
+   "outcome": "refused",
+   "reason": "no_consent_on_record",
+   "seq_no": 156688,
+   "subject_ref": "cust-1042",
+   "template_id": "x"
+  },
+  {
+   "at": 1787890644,
+   "caller_did": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+   "category": "billing",
+   "contract_id": 778,
+   "outcome": "dispatched",
+   "provider_status": 200,
+   "reason": "consent_valid",
+   "seq_no": 156715,
+   "subject_ref": "cust-1042",
+   "template_id": "invoice_due"
+  },
+  {
+   "at": 1787890647,
+   "caller_did": "9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+   "category": "billing",
+   "contract_id": 778,
+   "outcome": "refused",
+   "reason": "consent_withdrawn",
+   "seq_no": 156726,
+   "subject_ref": "cust-1042",
+   "template_id": "invoice_due"
+  }
+ ],
+ "truncated": false
+}
+demo rc=0
