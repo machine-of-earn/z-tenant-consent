@@ -50,6 +50,8 @@ email address; the recipient is resolved host-side from the user profile
   "audit_key": "a/cust-1042/00000000000000156636" }
 ```
 
+![live run](docs/screenshots/01-live-run-send.png)
+
 The provider's echo of step 3 shows `"to": "machinamachinery@gmail.com"` — a
 real address, resolved by the host inside the enclave. Grep the contract for
 it and you will not find it: what the WASM held was the marker.
