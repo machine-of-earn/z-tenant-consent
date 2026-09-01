@@ -1,0 +1,28 @@
+--- 0. three identities authenticate — free, no credits needed ---
+tenant     did:t3n:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620
+contract   z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent @ 0.1.0
+data owner did:t3n:be3b5c5ddeaa49011b7772ec70422b9273ebc149  (fresh key, 0 credits)
+agent      did:t3n:287c54c6196551bd61bb5c48872be66610a95ddf  (fresh key, 0 credits)
+--- 1. the data owner authorises the AGENT's DID (not its own) on our contract ---
+OK   agent-auth-update signed by the data owner: "{\"tx_hash\":\"tx:121:176140\"}"
+--- 2. the agent records the data owner's consent — called with the AGENT's session ---
+FAIL record-consent: InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)
+--- 3. the agent sends the notice — the recipient stays inside the enclave ---
+FAIL send-notice: InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)
+--- 4. the tenant reads the audit ledger back — tenant session, has credits ---
+OK   audit-log (tenant session): {"count":0,"limit":20,"rows":[],"truncated":false}
+--- result ---
+{
+ "tenantDid": "did:t3n:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
+ "dataOwnerDid": "did:t3n:be3b5c5ddeaa49011b7772ec70422b9273ebc149",
+ "agentDid": "did:t3n:287c54c6196551bd61bb5c48872be66610a95ddf",
+ "authenticated_without_credits": true,
+ "grant": true,
+ "record_consent": false,
+ "send_notice": false,
+ "audit_log": true,
+ "errors": [
+  "InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)",
+  "InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)"
+ ]
+}

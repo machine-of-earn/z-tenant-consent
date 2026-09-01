@@ -56,6 +56,39 @@ The provider's echo of step 3 shows `"to": "machinamachinery@gmail.com"` — a
 real address, resolved by the host inside the enclave. Grep the contract for
 it and you will not find it: what the WASM held was the marker.
 
+## Three parties, three DIDs
+
+`ops/demo.ts` runs the story on one key: the same identity is tenant, data owner
+and caller. `ops/three-party.ts` runs it the way the platform means it, with three
+distinct DIDs and no shared key — the tenant from `T3N_API_KEY`, a data owner and
+an agent from their own secp256k1 keys:
+
+```bash
+export T3N_API_KEY="…"          # tenant: owns and deployed the contract
+npm run three-party             # generates the other two keys if unset and prints them
+```
+
+Recorded run, 2026-09-01 (full output in
+[`docs/three-party-transcript.txt`](docs/three-party-transcript.txt)):
+
+| Step | Signed by | Result |
+|---|---|---|
+| authenticate ×3 | all three | three distinct DIDs, no credits needed |
+| `agent-auth-update` — the data owner authorises the **agent's** DID on `z:…:consent` | data owner | OK, `tx:121:176140` |
+| `record-consent`, `send-notice` | agent | `InsufficientCredit (required=10000000000, available=0)` |
+| `audit-log` | tenant | OK |
+
+So the separation itself is real and reachable: a data owner who has never met the
+tenant grants a named agent DID access to named functions on a named contract, and
+the agent authenticates as itself. What is left is money, not design — an agent
+DID's credit balance is separate from its tenant's and starts at zero, and a key
+minted anywhere but the claim page starts empty. Fund `did:t3n:287c54c6…` and the
+last two rows go green with no code change; the script is written so that funding
+is the only variable.
+
+The zero-credit grant in row 2 is not what the docs predict, and is logged as
+[BUGS.md](BUGS.md) #7.
+
 ## Interface
 
 Five functions, all on the `contracts` interface, all taking the standard
@@ -88,7 +121,8 @@ rebuild, no re-registration, no new `contract_id`.
 
 ## Build and run
 
-Prerequisites: Rust with `wasm32-wasip2`, Node ≥ 18.
+Prerequisites: Rust with `wasm32-wasip2`, Node ≥ 20 (the SDK throws
+`Crypto API is not available` on Node 18 — [BUGS.md](BUGS.md) #8).
 
 ```bash
 rustup target add wasm32-wasip2

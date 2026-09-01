@@ -176,6 +176,60 @@ resolves — confirming the profile substitution works on the self-call path.
 
 ---
 
+## 7. A zero-credit DID *can* sign `agent-auth-update` — the docs say it cannot
+
+The docs are emphatic that an identity created outside the claim page is unusable:
+*"A key generated any other way ... starts with **zero** credits and can't pay for
+this step"* (`/developers/agents/register-agent`), and the common-errors table
+attributes `InsufficientCreditError` on agent calls to exactly that.
+
+Measured on testnet 2026-09-01 with two keys generated locally
+(`randomBytes(32)`), neither ever touched by the claim page:
+
+| Step | Identity | Result |
+|---|---|---|
+| handshake + `authenticate` | data owner, 0 credits | OK — DID `did:t3n:be3b5c5d…` issued |
+| handshake + `authenticate` | agent, 0 credits | OK — DID `did:t3n:287c54c6…` issued |
+| `tee:user/contracts` → `agent-auth-update` | data owner, 0 credits | **OK — `tx:121:176140`** |
+| `record-consent` on our contract | agent, 0 credits | `InsufficientCredit (required=10000000000, available=0)` |
+| `send-notice` on our contract | agent, 0 credits | `InsufficientCredit (required=10000000000, available=0)` |
+
+So the credit gate is on *contract invocation*, not on writes in general: the data
+owner's authorisation grant — a state-changing write to a system contract — went
+through on an account with a zero balance. A developer reading the current text
+would expect step 3 to fail too, and would go get a claim-page key before
+discovering that the free part of the three-party flow is already reachable.
+
+Also useful, and not stated anywhere we found: the metered price of one contract
+call is exactly **10,000,000,000 base units**, and the error names the account,
+the requirement and the balance — a good error, worth keeping.
+
+**Ask:** say "invoking a contract is metered; identity creation and
+`agent-auth-update` are not", and state the per-call price.
+
+---
+
+## 8. The prerequisites page never names a minimum Node version, and the SDK hard-fails on Node 18
+
+`@terminal3/t3n-sdk@5.2.0` on Node **18.19.1** (Debian's current default) throws
+before any network call:
+
+```
+Error: Crypto API is not available in Node.js 18.19.1. The crypto module should be
+available. If you're using Node.js 16-18, ensure you're importing this SDK correctly.
+```
+
+The message reads as an import mistake, but the import is the documented one, and
+the same file runs unchanged on Node 22.14.0. Node 18 only exposes
+`globalThis.crypto` behind `--experimental-global-webcrypto`, so this is a version
+floor, not a usage error. `Set Up Development Environment` lists no Node version
+requirement at all, and `package.json` in the SDK declares no `engines` field.
+
+**Ask:** put `"engines": { "node": ">=20" }` in the SDK package and one line on the
+prerequisites page. Re-word the error to name the real cause.
+
+---
+
 ## Things that worked exactly as documented
 
 Worth recording, because a bug log with no baseline is not useful:
