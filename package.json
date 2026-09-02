@@ -9,7 +9,8 @@
     "deploy": "tsx ops/deploy.ts",
     "demo": "tsx ops/demo.ts",
     "three-party": "tsx ops/three-party.ts",
-    "egress-probe": "tsx ops/egress-probe.ts"
+    "egress-probe": "tsx ops/egress-probe.ts",
+    "delegated-send": "tsx ops/delegated-send.ts"
   },
   "dependencies": {
     "@terminal3/t3n-sdk": "^5.2.0"

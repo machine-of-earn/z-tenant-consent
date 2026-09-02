@@ -320,14 +320,70 @@ or (b) a fresh DID with no profile record binds no context and the error is
 reported as *no context* rather than *no such field* (the host has a separate
 `placeholder-unknown(field)` variant for that, which we never saw).
 
-**Ask:** state which identity's profile a contract's placeholders resolve
-against, and how a caller other than the tenant gets a user bound to its
-invocation — a `user_did`/subject argument on execute, a delegation credential,
-or "not supported yet". If it is the third, say so on the Agent Auth page, since
-its example implies otherwise.
+**Settled the same day, and it is not an authorisation problem.** The execute
+wire does have a subject argument — `pii_did`, "delegated-call target member;
+omitted for a self (non-delegated) call" (`InvokeRequest` in the SDK types; it is
+not on any docs page we could find). Naming the subject and holding a grant the
+node itself calls valid still does not bind a user:
 
-Reproduce: `ops/three-party.ts` steps 4-7; full transcript in
-`docs/three-party-transcript.txt`.
+| Delegation state | `delegation.check` | agent's `send-notice` with `pii_did` |
+|---|---|---|
+| `agent-auth-update` grant only (the documented surface) | `authorised:false, disclosed:false` | `Forbidden (agent_auth_not_found)` — see #11 |
+| `member-delegation-update` grant (the current surface) | `authorised:true, disclosed:true, satisfied:[member_delegation]` | `placeholder_no_user_context` |
+
+So the authorisation edge can be made complete and correct, the call is accepted
+as a delegated call, and the enclave still has no profile to resolve against.
+
+**Ask:** state which identity's profile a contract's placeholders resolve
+against on a delegated call, and whether binding a subject user is supported in
+this build at all. If it is not yet, say so on the Agent Auth page — its worked
+example is exactly this shape. Document `pii_did` either way.
+
+Reproduce: `ops/three-party.ts` steps 4-7 and `ops/delegated-send.ts` (which
+writes the grant on the current surface and calls with the subject named); full
+transcript in `docs/three-party-transcript.txt`.
+
+---
+
+## 11. The delegated call reads a different grant store than the one the docs teach
+
+**Severity: high — every worked example on the docs site writes to the surface the
+delegated path does not read.**
+
+The docs teach `agent-auth-update` on `tee:user/contracts`
+([Agent Auth](https://docs.terminal3.io/developers/adk/overview/agent-auth-adk),
+[Invoke your contract](https://docs.terminal3.io/developers/adk/get-started/walkthrough/invoke-contract)).
+The SDK marks that whole module **deprecated**, in favour of
+`member-delegation-get` / `member-delegation-update` on
+`tee:authorisations/contracts` (`T3nClient.updateMemberDelegation`).
+
+Measured 2026-09-02, same agent, same subject, same contract, same functions:
+
+| Grant written by the data owner | `delegation.check` verdict | agent's delegated call |
+|---|---|---|
+| `agent-auth-update` (documented), read back intact with `agent-auth-get` | `authorised:false, disclosed:false, satisfied:[], missing:[]` | `Forbidden (agent_auth_not_found): did:t3n:287c54c6… not permitted to act on behalf of did:t3n:be3b5c5d… for z:…:consent send-notice` |
+| `member-delegation-update` (current), same fields | `authorised:true, disclosed:true, satisfied:[{grant:"member_delegation",…}]` | passes the authorisation gate |
+
+The first row is the state a developer reaches by following the documentation
+exactly. The node's own answer to "is this agent allowed to act for this member"
+is **no**, while the grant sits readable in the store the docs told them to write.
+Two failure modes follow from that, and we hit both: a *self*-call path where the
+`agent-auth-update` grant IS honoured for functions and egress (findings #9, #10),
+and a *delegated* path where it is not seen at all — so the same document behaves
+differently depending on how the call is made.
+
+Note also that `updateMemberDelegation` attaches a validity window on its own
+(`valid_from_secs 1788315711`, `valid_until_secs 1796091711` — 90 days) where the
+`agent-auth-update` write we made carried none. That default is not stated
+anywhere we read.
+
+**Ask:** point the walkthroughs at the surface the delegated path actually reads,
+or make `agent-auth-update` write through to it during the deprecation window.
+Whichever way, `delegation.check` is the fastest debugging tool on the platform
+and deserves a docs page — it answered in one call what four `send-notice`
+attempts could only hint at.
+
+Reproduce: `ops/delegated-send.ts`.
 
 ---
 

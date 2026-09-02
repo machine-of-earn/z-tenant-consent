@@ -105,6 +105,16 @@ route around from outside, and it is [BUGS.md](BUGS.md) #10. The contract's own
 behaviour is correct throughout: it refuses to dispatch rather than substituting
 anything it cannot prove, and every attempt is on the ledger.
 
+**And the delegated call reads a different grant store than the docs teach.**
+`ops/delegated-send.ts` writes the same grant on the current surface
+(`member-delegation-update`, i.e. `T3nClient.updateMemberDelegation`) and calls with
+`pii_did` — the execute wire's "delegated-call target member", which appears in the SDK
+types and on no docs page. With the documented `agent-auth-update` grant alone the node
+answers `Forbidden (agent_auth_not_found)`; with the current-surface grant,
+`delegation.check` returns `authorised:true, disclosed:true` and the call is accepted as
+delegated — and still ends at `placeholder_no_user_context`. So the wall in #10 is not an
+authorisation problem: [BUGS.md](BUGS.md) #11.
+
 The zero-credit grant in row 2 is not what the docs predict, and is logged as
 [BUGS.md](BUGS.md) #7.
 
