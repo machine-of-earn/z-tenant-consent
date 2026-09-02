@@ -68,23 +68,42 @@ export T3N_API_KEY="…"          # tenant: owns and deployed the contract
 npm run three-party             # generates the other two keys if unset and prints them
 ```
 
-Recorded run, 2026-09-01 (full output in
-[`docs/three-party-transcript.txt`](docs/three-party-transcript.txt)):
+Recorded run, 2026-09-02, after Terminal 3 funded the two fresh DIDs (full output
+in [`docs/three-party-transcript.txt`](docs/three-party-transcript.txt)):
 
-| Step | Signed by | Result |
+| Step | Called by | Result |
 |---|---|---|
-| authenticate ×3 | all three | three distinct DIDs, no credits needed |
-| `agent-auth-update` — the data owner authorises the **agent's** DID on `z:…:consent` | data owner | OK, `tx:121:176140` |
-| `record-consent`, `send-notice` | agent | `InsufficientCredit (required=10000000000, available=0)` |
-| `audit-log` | tenant | OK |
+| authenticate ×3 | all three | three distinct DIDs, free — no credits needed |
+| `agent-auth-update` — the data owner authorises the **agent's** DID on `z:…:consent` | data owner | OK, `tx:121:176670` |
+| `record-consent` for the data owner's subject | **agent** | OK, `seq_no 176673` — the consent row the send is later judged against |
+| `agent-auth-update` with an empty `agents` list | agent | OK, `tx:121:176678` — clears the agent's own document so the next row measures one thing |
+| `send-notice` on the data owner's grant alone | agent | `egress_denied: host 'httpbin.org' is not on the caller's allowed-hosts grant` |
+| `agent-auth-update` naming itself, same host | agent | OK, `tx:121:176683` |
+| `send-notice` again | agent | egress passes; `placeholder_no_user_context` |
+| `send-notice`, self-granted | data owner | `placeholder_no_user_context` |
+| `send-notice` | tenant | **dispatched**, provider HTTP 200, audit `a/cust-3001/00000000000000176692` |
+| `audit-log` | tenant | 2 rows, `outcome dispatched`, `reason consent_valid` |
 
-So the separation itself is real and reachable: a data owner who has never met the
-tenant grants a named agent DID access to named functions on a named contract, and
-the agent authenticates as itself. What is left is money, not design — an agent
-DID's credit balance is separate from its tenant's and starts at zero, and a key
-minted anywhere but the claim page starts empty. Fund `did:t3n:287c54c6…` and the
-last two rows go green with no code change; the script is written so that funding
-is the only variable.
+Read it as three separate results.
+
+**The separation is real and reachable.** A data owner who has never met the tenant
+grants a named agent DID access to named functions on a named contract, the agent
+authenticates as itself, and the agent's `record-consent` write lands on the data
+owner's grant. Consent is recorded by one identity and enforced against another.
+
+**Egress is authorised by the caller, not by the data owner.** The docs say a
+delegated call resolves the *subject user's* allowed hosts; measured, the data
+owner's grant naming the agent does not open the host, and the agent granting
+itself does. Ruled out separately in `ops/egress-probe.ts`: propagation delay,
+and a strict `versionReq` match. Logged as [BUGS.md](BUGS.md) #9.
+
+**Only the tenant's session has a user bound to it,** so `{{profile.*}}` resolves
+for the tenant and for nobody else — the agent and the data owner both stop at
+`placeholder_no_user_context`, and the data owner is a plain authenticated user
+making the documented direct self-call. That is the one wall this design cannot
+route around from outside, and it is [BUGS.md](BUGS.md) #10. The contract's own
+behaviour is correct throughout: it refuses to dispatch rather than substituting
+anything it cannot prove, and every attempt is on the ledger.
 
 The zero-credit grant in row 2 is not what the docs predict, and is logged as
 [BUGS.md](BUGS.md) #7.

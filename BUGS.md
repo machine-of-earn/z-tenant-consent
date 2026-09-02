@@ -230,6 +230,107 @@ prerequisites page. Re-word the error to name the real cause.
 
 ---
 
+## 9. Outbound egress is resolved from the CALLER's own grant, not the subject user's
+
+**Severity: high for anyone building the documented agent flow — the delegated
+call the docs describe cannot reach the network.**
+
+[Outbound HTTP calls are authorized by the user, not the
+contract](https://docs.terminal3.io/developers/adk/tips/outbound-http-auth-by-user)
+states the rule in two lines:
+
+> * **Delegated call** → the subject user's grant.
+> * **Direct (self) call** → the caller's own self-grant.
+
+Measured on testnet 2026-09-02, three distinct DIDs, one contract
+(`z:9e0cfe5b…:consent @ 0.1.0`), one host (`httpbin.org`):
+
+| # | What was in place | Caller | Result |
+|---|---|---|---|
+| 1 | data owner's grant names the agent, `allowedHosts:["httpbin.org"]` (`tx:121:176670`) | agent | `egress_denied: host 'httpbin.org' is not on the caller's allowed-hosts grant` |
+| 2 | same, re-written with `versionReq: null` (match any version) (`tx:121:176583`) | agent | `egress_denied` — unchanged |
+| 3 | same grant, retried with no new writes | agent | `egress_denied` — so it is not propagation delay |
+| 4 | agent additionally grants **itself** the same host (`tx:121:176683`) | agent | egress passes; the call now fails one layer later (see #10) |
+
+The stored document is not the problem — read back with `agent-auth-get` on the
+data owner's session, it holds exactly what was written:
+
+```json
+{"agents":[{"agent_did":"did:t3n:287c54c6196551bd61bb5c48872be66610a95ddf",
+  "scripts":[{"script_name":"z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent",
+  "version_req":"0.1.0","functions":["record-consent","withdraw-consent",
+  "check-consent","send-notice","audit-log"],…}]}]}
+```
+
+The same session reads `null` from the agent's own document, so before step 4 the
+agent held no self-grant at all — and that is the single variable that changed
+the outcome. Note also that the agent's `record-consent` call **succeeded**
+throughout on the data owner's grant, so the function half of the grant is honoured
+across identities; only the egress half is read off the caller.
+
+This inverts the security story on the page: the point of the model is that the
+data owner decides which hosts an agent may reach on their behalf. As it behaves
+today, the agent authorises its own egress and the data owner's list is not
+consulted.
+
+**Ask:** either make the delegated path resolve the subject user's grant as
+documented, or change the page to say egress is always the caller's own — and
+add the note to
+[Agent Auth](https://docs.terminal3.io/developers/adk/overview/agent-auth-adk),
+whose worked example is the delegated shape.
+
+Reproduce: `ops/three-party.ts` steps 2b-4 (it revokes the agent's own document
+first so the measurement is deterministic), or `ops/egress-probe.ts`, which rules
+out propagation and `versionReq` separately. Request ids from the run:
+`f658a52d-462d-4386-b0fc-b82945e80d91` (denied),
+`5ca1c699-a8b3-4927-98a6-25213fb461c6` (past egress, next error).
+
+---
+
+## 10. Only the tenant's own session carries a user context, so `{{profile.*}}` cannot resolve for anyone else
+
+**Severity: high — it is what stops a three-party flow from completing end to end.**
+
+With egress open (finding #9, step 4), `send-notice` fails at placeholder
+resolution for every identity except the tenant that owns the contract:
+
+| Caller | Self-grant in place | Result |
+|---|---|---|
+| agent `did:t3n:287c54c6…` | yes (`tx:121:176683`) | `placeholder_no_user_context` — request `5ca1c699-…` |
+| data owner `did:t3n:be3b5c5d…` | yes (`tx:121:176688`) | `placeholder_no_user_context` — request `924b58e1-…` |
+| tenant `did:t3n:9e0cfe5b…` | yes | **dispatched**, provider HTTP 200, audit row `a/cust-3001/00000000000000176692` |
+
+`placeholder_no_user_context` is this contract's rendering of the host's
+`placeholder-no-user-context` variant: *no user is bound to the invocation, so
+there is no profile to resolve from*. The data owner is a fully authenticated
+user session calling its own contract function directly — the documented
+"direct (self) call" — and it still has no user bound.
+
+[Placeholders in outbound calls](https://docs.terminal3.io/developers/adk/tips/placeholders-outbound-calls)
+says the marker resolves against the calling user's profile, and
+[Agent Auth](https://docs.terminal3.io/developers/adk/overview/agent-auth-adk)
+describes an agent acting for a data owner. Together they read as: an agent calls,
+the data owner's contact is substituted inside the enclave, the agent never sees
+it. That is exactly the shape this contract was written for, and it is the one
+shape that cannot run today.
+
+Two possibilities we cannot distinguish from outside, and either answer is a
+docs fix: (a) user context is bound only for the tenant DID on its own contract,
+or (b) a fresh DID with no profile record binds no context and the error is
+reported as *no context* rather than *no such field* (the host has a separate
+`placeholder-unknown(field)` variant for that, which we never saw).
+
+**Ask:** state which identity's profile a contract's placeholders resolve
+against, and how a caller other than the tenant gets a user bound to its
+invocation — a `user_did`/subject argument on execute, a delegation credential,
+or "not supported yet". If it is the third, say so on the Agent Auth page, since
+its example implies otherwise.
+
+Reproduce: `ops/three-party.ts` steps 4-7; full transcript in
+`docs/three-party-transcript.txt`.
+
+---
+
 ## Things that worked exactly as documented
 
 Worth recording, because a bug log with no baseline is not useful:

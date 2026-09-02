@@ -1,0 +1,22 @@
+
+[probe] audit-log with an empty input object
+  OK: {"count":7,"limit":50,"rows":[{"at":1787890455,"caller_did":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620","category":"billing","contract_id":778,"outcome":"dispatched","provider_status":200,"reason":"consent_valid","seq_no":156624,"subject_ref":"cust-1042","template_id":"invoice_due"},{"at":1787890457,"caller_did":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620","category":"billing","contract_id":778,"outc
+
+[probe] audit-log with no subject filter (whole ledger)
+  OK: {"count":5,"limit":5,"rows":[{"at":1787890455,"caller_did":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620","category":"billing","contract_id":778,"outcome":"dispatched","provider_status":200,"reason":"consent_valid","seq_no":156624,"subject_ref":"cust-1042","template_id":"invoice_due"},{"at":1787890457,"caller_did":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620","category":"billing","contract_id":778,"outco
+
+[probe] a function name that does not exist
+  ERR: RPC Error: contract interface error: Function not found: Function 'no-such-function' not found in contract (looked up under 'z:tenant-consent/contracts@0.1.0.no-such-function' and walked every interface export) [3dc8410c-75ca-4c4d-bd32-fe0a80d834dd]
+
+[probe] send-notice for a subject with no consent row at all
+  OK: {"at":1787890757,"audit_key":"a/cust-never-seen/00000000000000156748","dispatched":false,"reason":"no_consent_on_record"}
+
+[probe] check-consent for a category never recorded
+  OK: {"allowed":false,"checked_at":1787890757,"reason":"no_consent_on_record","row":null}
+
+[probe] send-notice with a category that has no grant scope
+  OK: {"at":1787890758,"audit_key":"a/cust-1042/00000000000000156755","dispatched":false,"reason":"no_consent_on_record"}
+
+[probe] a 129-character subject_ref (over the contract's own cap)
+  ERR: RPC Error: contract error: bad input: subject_ref must be 128 characters or fewer [783074b0-4fee-4e60-b606-549273383e10]
+probes rc=0

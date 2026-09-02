@@ -1,28 +1,55 @@
+
 --- 0. three identities authenticate — free, no credits needed ---
 tenant     did:t3n:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620
 contract   z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent @ 0.1.0
-data owner did:t3n:be3b5c5ddeaa49011b7772ec70422b9273ebc149  (fresh key, 0 credits)
-agent      did:t3n:287c54c6196551bd61bb5c48872be66610a95ddf  (fresh key, 0 credits)
+data owner did:t3n:be3b5c5ddeaa49011b7772ec70422b9273ebc149
+agent      did:t3n:287c54c6196551bd61bb5c48872be66610a95ddf
+
 --- 1. the data owner authorises the AGENT's DID (not its own) on our contract ---
-OK   agent-auth-update signed by the data owner: "{\"tx_hash\":\"tx:121:176140\"}"
+OK   agent-auth-update signed by the data owner: "{\"tx_hash\":\"tx:121:176670\"}"
+
 --- 2. the agent records the data owner's consent — called with the AGENT's session ---
-FAIL record-consent: InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)
---- 3. the agent sends the notice — the recipient stays inside the enclave ---
-FAIL send-notice: InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)
---- 4. the tenant reads the audit ledger back — tenant session, has credits ---
-OK   audit-log (tenant session): {"count":0,"limit":20,"rows":[],"truncated":false}
+OK   record-consent: {"row":{"category":"billing","evidence_ref":"signup-form-v3","granted":true,"recorded_at":1788315208,"seq_no":176673,"subject_ref":"cust-3001"},"superseded_prior":true}
+
+--- 2b. the agent clears its own grant document, so ONLY the data owner's grant is in play ---
+OK   agent-auth-update with an empty agents list, signed by the agent: "{\"tx_hash\":\"tx:121:176678\"}"
+
+--- 3. the agent sends the notice on the data owner's grant alone — egress is denied ---
+FAIL send-notice called by the agent, on the data owner's grant: RPC Error: contract error: egress_denied: host 'httpbin.org' is not on the caller's allowed-hosts grant [f658a52d-462d-4386-b0fc-b82945e80d91]
+
+--- 4. the agent grants ITSELF the same hosts and retries — egress passes, user context does not ---
+OK   agent-auth-update signed by the agent (self-grant): "{\"tx_hash\":\"tx:121:176683\"}"
+FAIL send-notice called by the agent, on its own self-grant: RPC Error: contract error: placeholder_no_user_context: this invocation has no user bound, so there is no profile to resolve the recipient from [5ca1c699-a8b3-4927-98a6-25213fb461c6]
+
+--- 5. the data owner calls it directly, self-granted — same wall ---
+OK   agent-auth-update signed by the data owner (self-grant): "{\"tx_hash\":\"tx:121:176688\"}"
+FAIL send-notice called by the data owner, self-granted: RPC Error: contract error: placeholder_no_user_context: this invocation has no user bound, so there is no profile to resolve the recipient from [924b58e1-85e3-4d96-8631-f5bf22a48945]
+
+--- 6. the tenant dispatches — the one identity whose profile the enclave can resolve ---
+OK   send-notice called by the tenant: {"at":1788315212,"audit_key":"a/cust-3001/00000000000000176692","dispatched":true,"idempotency_key":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:cust-3001:billing:176692","provider_body":"{\n  \"args\": {}, \n  \"data\": \"{\\\"consent\\\":{\\\"category\\\":\\\"billing\\\",\\\"evidence_ref\\\":\\\"signup-form-v3\\\",\\\"expires_at\\\":null,\\\"recorded_at\\\":1788315208,\\\"subject_ref\\\":\\\"cust-3001\\\"},\\\"idempotency_key\\\":\\\"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:cust-3001:billing:1766
+
+--- 7. the tenant reads the audit ledger back — the agent's consent row governed the dispatch ---
+OK   audit-log (tenant session): {"count":3,"limit":20,"rows":[{"at":1788315082,"caller_did":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620","category":"billing","contract_id":778,"outcome":"dispatched","provider_status":200,"reason":"consent_valid","seq_no":176610,"subject_ref":"cust-3001","template_id":"invoice_due"},{"at":1788315176,"caller_did":"9e0cfe5b257503525ad98c65e6ab7d7f09fbf620","category":"billing","contract_id":778,"outcome":"dispatched","provider_status":200,"reason":"consent_valid","seq_no":176651,"subject_ref":"cust
+
 --- result ---
 {
  "tenantDid": "did:t3n:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620",
  "dataOwnerDid": "did:t3n:be3b5c5ddeaa49011b7772ec70422b9273ebc149",
  "agentDid": "did:t3n:287c54c6196551bd61bb5c48872be66610a95ddf",
  "authenticated_without_credits": true,
- "grant": true,
- "record_consent": false,
- "send_notice": false,
+ "data_owner_grants_agent": true,
+ "agent_revokes_own_grant": true,
+ "agent_records_consent": true,
+ "agent_send_on_owner_grant": false,
+ "agent_self_grant": true,
+ "agent_send_on_self_grant": false,
+ "owner_self_grant": true,
+ "owner_send_self_granted": false,
+ "tenant_send": true,
  "audit_log": true,
  "errors": [
-  "InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)",
-  "InsufficientCredit (account=287c54c6196551bd61bb5c48872be66610a95ddf, required=10000000000, available=0)"
+  "RPC Error: contract error: egress_denied: host 'httpbin.org' is not on the caller's allowed-hosts grant [f658a52d-462d-4386-b0fc-b82945e80d91]",
+  "RPC Error: contract error: placeholder_no_user_context: this invocation has no user bound, so there is no profile to resolve the recipient from [5ca1c699-a8b3-4927-98a6-25213fb461c6]",
+  "RPC Error: contract error: placeholder_no_user_context: this invocation has no user bound, so there is no profile to resolve the recipient from [924b58e1-85e3-4d96-8631-f5bf22a48945]"
  ]
 }
