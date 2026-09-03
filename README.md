@@ -8,6 +8,11 @@ Challenge, 2026-08-28.
 Live on testnet: `z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent`,
 contract id **778**, built from this commit.
 
+**Verify it without an account.** `cargo test` runs the whole decision model on the
+native target — 24 tests plus a doc-test, no cluster, no network, no credentials
+(re-run green 2026-09-03). Everything that needs Terminal 3 is under
+[`ops/`](ops) and is clearly marked; nothing in `src/` requires it.
+
 ## The problem
 
 A company wants an AI agent to send transactional notices — an invoice
