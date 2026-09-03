@@ -8,6 +8,14 @@ text the tool produced. Nothing here is inferred.
 Tenant DID used throughout: `did:t3n:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620`.
 Contract: `z:9e0cfe5b257503525ad98c65e6ab7d7f09fbf620:consent`, contract id `778`.
 
+**Re-verified 2026-09-03.** Every sentence this log quotes from docs.terminal3.io was
+re-fetched that day and matched byte-for-byte against the quote here, so nothing below
+is stale or paraphrased. `docs-checked.tsv` in this repo lists each page, its source
+URL, the fetch timestamp and the SHA-256 of the `.md` the site served — diff it against
+your own copy to see exactly what we read. Twenty-four pages checked; the only entry
+that moved is #1, sharpened below because the docs turn out to describe the error and
+give the wrong remedy for it, which is worse than the silence we first reported.
+
 ---
 
 ## 1. Undocumented per-minute fuel quota — `quota exceeded (fuel_per_minute)`
@@ -33,10 +41,25 @@ not in the reference. The docs describe credits as a *balance* that depletes
 have N units per minute". A developer whose first integration test loop trips
 this has no way to tell a rate limit from an exhausted account.
 
+**Sharpened 2026-09-03 — there *is* a row, and it sends you the wrong way.**
+[Common errors](https://docs.terminal3.io/developers/adk/tips/common-errors) carries
+
+> | `quota exceeded: <dim>` (e.g. `quota exceeded: max_contracts`) | Hit a per-tenant quota | Ask the cluster operator to raise the quota |
+
+which is the only place in the docs that names this error family. Both halves
+mislead for `fuel_per_minute`: the example dimension (`max_contracts`) is a
+standing per-tenant ceiling, and the remedy is a human request to an operator.
+`fuel_per_minute` is neither — it is a short time window that clears itself, and
+the developer who reads that row files a support request for something that fixes
+itself in about a hundred seconds. A rate limit and a capacity limit are the same
+string here.
+
 **Ask:** document the limit, its window, and its reset — and ideally return a
 `retry_after`. Waiting ~100 seconds and re-running succeeded, so the window is
 short; the exact figure is the sponsor's to state, and this log deliberately
-does not guess it.
+does not guess it. In the errors table, split the time-windowed dimensions from
+the per-tenant ones: "wait and retry" and "ask your operator" are opposite
+instructions.
 
 ---
 

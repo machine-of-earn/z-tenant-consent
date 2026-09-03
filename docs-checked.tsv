@@ -1,0 +1,27 @@
+# T3N documentation pages this bug log quotes, as served by docs.terminal3.io.
+# Re-fetched and checksummed 2026-09-03 with curl; no page content is republished here.
+# file	sha256	fetched_utc	url
+developers_adk_changelog.md	a81442d17a5fb1db88055ff9071e2ecebb2477e34f07493e38ae513020b9eca1	2026-09-03T19:37:17Z	https://docs.terminal3.io/developers/adk/changelog.md
+developers_adk_get-started_prerequisites_request-test-tokens.md	5929ec48eec40c887b94a853602e0488802fa7023e705ce29104207d7c1b5b6c	2026-09-03T19:37:17Z	https://docs.terminal3.io/developers/adk/get-started/prerequisites/request-test-tokens.md
+developers_adk_get-started_prerequisites_set-up-dev-env.md	56617f856942c828116a57237b9df9112595867b6bee4cd4274c1546e69af463	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/prerequisites/set-up-dev-env.md
+developers_adk_get-started_quickstart.md	a2a454ac7cc72ac87e524b772f1f934aa3ec76c25f740bd36183d52269a4e461	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/quickstart.md
+developers_adk_get-started_walkthrough_build-contract.md	54fa1caabfb9ed568f0be0456edc22dd9e4b8f6456c809f57565f9534d00a5ee	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/walkthrough/build-contract.md
+developers_adk_get-started_walkthrough_invoke-contract.md	cf0a274fa8549b1862a7f0e026ce05ce3f1dea3bdf0012c1ba8291976017ea29	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/walkthrough/invoke-contract.md
+developers_adk_get-started_walkthrough_register-contract.md	9f1170776e1659ab22c05d577dbbd0a14d195bd7ea967c69a8bb9eb7a3a27d03	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/walkthrough/register-contract.md
+developers_adk_get-started_walkthrough_test.md	0cd0b38b24f7c409dd98a20ac92186d652a8b0f31683d0380dc76b78aa124eba	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/walkthrough/test.md
+developers_adk_get-started_walkthrough_write-contract.md	b481611608a5a801f56df9efdbf0c2682ba42be7e317330a6b2352141cad7297	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/walkthrough/write-contract.md
+developers_adk_get-started_what-is-z-namespace.md	b8251c96a1690ac716183eb312ec3e8f713af7b030b478f92188f419435c87ad	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/get-started/what-is-z-namespace.md
+developers_adk_overview_adk-tour.md	ba26803940a08bf2f889660bec03cdb0ee1797db2b5c352721dac3c7603e4573	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/overview/adk-tour.md
+developers_adk_overview_agent-auth-adk.md	5d373c0e39b62be182a02a62182f4d0baa6764fb0ac4912e8eab030eecda9216	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/overview/agent-auth-adk.md
+developers_adk_reference.md	f6455a03d6e1297dc470151da71e382ddc51b28612979f6f389859edff747259	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/reference.md
+developers_adk_support_ai-coding-assistants.md	1a9484557acbc6ca3ad47b7ead961665084b629163bc36ef43f785d06d1eebbc	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/support/ai-coding-assistants.md
+developers_adk_tips_capabilities-from-wit-import.md	b5b130f9d52b31ad64a8c2e12f17b4a0d6210e4709634cc5cb6b893614421138	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/tips/capabilities-from-wit-import.md
+developers_adk_tips_common-errors.md	6ba399b911bc23f4b0eaed3064e751357174cd084d2457c3aceeffeae4fb6766	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/tips/common-errors.md
+developers_adk_tips_create-kv-maps.md	ed1737585fd680b3d42e1903f8bd31c5bf060d109c12445247b058b6f47bdd8e	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/tips/create-kv-maps.md
+developers_adk_tips_outbound-http-auth-by-user.md	4cf22ad1977a71bf700ee82d25a62a6b2a2276bc4b5173daf4c6914b4eba33e3	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/tips/outbound-http-auth-by-user.md
+developers_adk_tips_placeholders-outbound-calls.md	c461f745f4771bae1a00ff823ab0e0925811735922c275d34aa9e80eedc3f4de	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/tips/placeholders-outbound-calls.md
+developers_adk_tips_seed-api-key.md	663c0160ba539b9792bb71d1dc7f3f071bc1587c33a04d392102b23044313866	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/tips/seed-api-key.md
+developers_adk_use-cases_payroll-agent.md	df2dbef748de0b50820f637f8be27a4af1f844740194a33a34382f32bbd69d89	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/adk/use-cases/payroll-agent.md
+developers_agents_register-agent.md	230407b7341e91364427caa85f2cd6f154e1853f3da923b772f079b9a6e22446	2026-09-03T19:36:52Z	https://docs.terminal3.io/developers/agents/register-agent.md
+t3n_how-t3n-works_host-api.md	3aecfeb35f784aed7105c8b34e61c68ef5e7cd7688842da1b01c72f94141086c	2026-09-03T19:36:52Z	https://docs.terminal3.io/t3n/how-t3n-works/host-api.md
+t3n_how-t3n-works_tokens.md	accfab224f8b90bd0a1dbebdf8b6da005d59202731d6d590864931af4bbf2fa4	2026-09-03T19:37:17Z	https://docs.terminal3.io/t3n/how-t3n-works/tokens.md
